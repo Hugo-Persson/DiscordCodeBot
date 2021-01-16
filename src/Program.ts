@@ -1,6 +1,6 @@
 import { additionalProperties, column, Model, primaryKey } from "./Model";
 
-export default class Car extends Model {
+export default class Program extends Model {
   @column
   @primaryKey
   @additionalProperties({
@@ -14,23 +14,21 @@ export default class Car extends Model {
   public name: string;
 
   @column
-  @additionalProperties({ type: "INT(8)", notNull: true })
-  public userId: number;
+  @additionalProperties({ type: "VARCHAR(100)", notNull: true })
+  public userId: string;
 
   @column
   @additionalProperties({ type: "TEXT", notNull: true })
-  public code: number;
+  public code: string;
 
-  protected static tableName = "cars";
+  protected static tableName = "programs";
 
-  constructor(id?: number, name?: string, year?: number) {
+  constructor(id?: number, name?: string, userId?: string, code?: string) {
     super();
 
     this.id = id;
     this.name = name;
-    this.year = year;
-  }
-  public get users() {
-    return this.manyToMany<User>(User, UsersCars, "id", "carId");
+    this.userId = userId;
+    this.code=code;
   }
 }

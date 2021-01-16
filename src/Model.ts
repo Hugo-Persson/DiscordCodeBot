@@ -17,6 +17,7 @@ export abstract class Model {
   }
   public static startDatabaseConnection() {
     return new Promise(async (resolve) => {
+      console.log("START",process.env.DB);
       this.dbPool = mariadb.createPool({
         host: process.env.DB_HOST,
         user: process.env.DB_USER,
@@ -26,6 +27,7 @@ export abstract class Model {
         port: parseInt(process.env.DB_PORT) || 3306,
       });
       this.dbConnection = await this.dbPool.getConnection();
+      console.log("DONE");
       resolve();
     });
   }
