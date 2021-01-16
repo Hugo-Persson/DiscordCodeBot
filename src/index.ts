@@ -78,8 +78,8 @@ function executeCodeContainer(code: string, msg: Discord.Message) {
     try {
         const result = safeEval(code, { console: { log: fakeConsoleLog } });
         msg.reply("\n" + returnMessages.join("\n"));
-    } catch (e) {
-        msg.reply("Error " + JSON.stringify(e));
+    } catch (e: any) {
+        msg.reply("Error " + e.message);
     }
 }
 client.login(process.env.TOKEN);
