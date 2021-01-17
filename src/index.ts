@@ -1,6 +1,7 @@
 import Discord from "discord.js";
 import { Module } from "module";
 import safeEval from "safe-eval";
+import { Script } from "vm";
 import { Model } from "./Model";
 import Program from "./Program";
 
@@ -28,6 +29,9 @@ client.on("message", (msg) => {
             case "$saveScript":
                 saveScript(msg, chunks);
                 break;
+            case "$script":
+                script(msg, chunks);
+                break;
             default:
                 msg.reply("Unknown command");
         }
@@ -46,34 +50,51 @@ function help(msg: Discord.Message, chunks: Array<string>) {
     `);
 }
 
-async function saveScript(msg: Discord.Message, chunks: Array<string>){
-    try{
+async function saveScript(msg: Discord.Message, chunks: Array<string>) {
+    try {
         const name = chunks.shift();
         const code = parseCodeInput(chunks.join(" "));
-        const programObj = new Program(undefined, name, msg.author.id,code);
+        const programObj = new Program(undefined, name, msg.author.id, code);
         await programObj.save();
         msg.reply("Script saved, run library to see all scripts available");
-    }
-    catch(e){
+    } catch (e) {
         msg.reply("An error occured");
         console.log("Error", e);
     }
-    
 }
-async function library(msg: Discord.Message, chunks: Array<string>){
-    try{
-        let programs: Array<Program> = await Program.getManyRowsByFilter(new Program(undefined,undefined,msg.author.id));
-        const formattedPrograms = programs.map(e=>{
+async function library(msg: Discord.Message, chunks: Array<string>) {
+    try {
+        let programs: Array<Program> = await Program.getManyRowsByFilter(
+            new Program(undefined, undefined, msg.author.id)
+        );
+        const formattedPrograms = programs.map((e) => {
             return `Name: ${e.name} Id: ${e.id}`;
         });
         msg.reply("\n" + formattedPrograms.join("\n"));
-    }
-    catch(e){
+    } catch (e) {
         msg.reply("An error occured");
     }
 }
 function run(msg: Discord.Message, chunks: Array<string>) {
     executeCodeContainer(parseCodeInput(chunks.join(" ")), msg);
+}
+
+async function script(msg: Discord.Message, chunks: Array<string>) {
+    try {
+        if (!chunks.length) {
+            msg.reply("No id");
+            return;
+        }
+        const id = chunks.shift().trim();
+
+        const script: Program = await Program.getSingleRowByFilter(
+            new Program(Number(id))
+        );
+
+        executeCodeContainer(script.code, msg);
+    } catch (e) {
+        msg.reply("Error");
+    }
 }
 
 function parseCodeInput(code: string): string {
@@ -98,7 +119,6 @@ function executeCodeContainer(code: string, msg: Discord.Message) {
         ${code}
     })();
     `;
-    console.log("CODE", code);
     try {
         const result = safeEval(code, { console: { log: fakeConsoleLog } });
         msg.reply("\n" + returnMessages.join("\n"));
@@ -107,10 +127,9 @@ function executeCodeContainer(code: string, msg: Discord.Message) {
     }
 }
 
-async function init(){
+async function init() {
     console.log("start");
     await Model.startDatabaseConnection();
     client.login(process.env.TOKEN);
 }
 init();
-
