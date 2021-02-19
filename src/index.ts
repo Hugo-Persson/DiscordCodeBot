@@ -32,6 +32,9 @@ client.on("message", (msg) => {
             case "$script":
                 script(msg, chunks);
                 break;
+            case "$source":
+                source(msg, chunks)
+                break;
             default:
                 msg.reply("Unknown command");
         }
@@ -45,11 +48,29 @@ function help(msg: Discord.Message, chunks: Array<string>) {
         * $run {code} - Will run the code, you can run code inside code blocks
         * $saveScript {name} {code} - Will start saving a script, you will be asked for name, you have following flags available -p --public -sg --severGlobal
         * $library - Will display available scripts you have stored
-        * $serverScripts
-        * $subscribe {id}
+        * $serverScripts - See all global script available
+        * $subscribe {id} - Add script to your library - NOT IMPLEMENTED
+        * $script {id} - Run a script by name or id - NOT IMPLEMENTED
+        * $source {id} - See script source code
     `);
 }
 
+
+async function source(msg: Discord.Message, chunks:Array<string>){
+    try{
+        const id = Number(chunks.shift());
+        const programObj = await Program.getSingleRowByFilter(new Program(id));
+        
+        msg.reply(`
+\`\`\`javascript
+${programObj.code}
+\`\`\``);
+    }
+    catch (e) {
+        msg.reply("An error occured");
+        console.log("Error", e);
+    }
+}
 async function saveScript(msg: Discord.Message, chunks: Array<string>) {
     try {
         const name = chunks.shift();
@@ -67,6 +88,7 @@ async function library(msg: Discord.Message, chunks: Array<string>) {
         let programs: Array<Program> = await Program.getManyRowsByFilter(
             new Program(undefined, undefined, msg.author.id)
         );
+        console.log(programs);
         const formattedPrograms = programs.map((e) => {
             return `Name: ${e.name} Id: ${e.id}`;
         });
